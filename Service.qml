@@ -223,7 +223,6 @@ Item {
     }
   }
 
-  onPlayersChanged: sourcePlayersDebounceTimer.restart()
   onPlaybackVersionChanged: sourcePlayersDebounceTimer.restart()
   // playerStartedAt changes every time syncPlayingOrder() runs (it writes playerStartedAt = next).
   // syncPlayingOrder() is called on every onIsPlayingChanged (via Instantiator below) and on
@@ -810,8 +809,14 @@ Item {
     return handled
   }
 
-  Component.onCompleted: root.syncPlayingOrder()
-  onPlayersChanged: root.syncPlayingOrder()
+  Component.onCompleted: {
+    root.syncPlayingOrder()
+    root.sourcePlayers = root.orderedSourcePlayers()
+  }
+  // Players appearing or leaving reorder the list and refresh the source list; both go
+  // through playbackDebounceTimer (its playbackVersion++ restarts sourcePlayersDebounceTimer
+  // via onPlaybackVersionChanged), so no player-dependent work runs inside the signal.
+  onPlayersChanged: playbackDebounceTimer.restart()
 
   Timer {
     id: trackOsdTimer
